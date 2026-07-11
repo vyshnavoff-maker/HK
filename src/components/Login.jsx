@@ -13,16 +13,25 @@ export default function Login({ onLogin }) {
     setLoading(true)
 
     const uname = username.trim().toLowerCase()
-    const { data, error: qErr } = await supabase
-      .from('employees')
-      .select('username, password, full_name, role')
-      .eq('username', uname)
-      .maybeSingle()
+    let data, qErr
+    try {
+      const res = await supabase
+        .from('employees')
+        .select('username, password, full_name, role')
+        .eq('username', uname)
+        .maybeSingle()
+      data = res.data
+      qErr = res.error
+    } catch (networkErr) {
+      setLoading(false)
+      setError('Network error: ' + (networkErr?.message || String(networkErr)))
+      return
+    }
 
     setLoading(false)
 
     if (qErr) {
-      setError('Could not reach the server. Check your connection.')
+      setError('Server error: ' + qErr.message + (qErr.details ? ' — ' + qErr.details : '') + (qErr.hint ? ' (' + qErr.hint + ')' : ''))
       return
     }
     if (!data || data.password !== password) {
