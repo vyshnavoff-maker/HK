@@ -8,7 +8,6 @@ function today() {
 export default function Attendance({ session }) {
   const [date, setDate] = useState(today())
   const [rows, setRows] = useState([])
-  const [myRow, setMyRow] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => { load() }, [date])
@@ -19,13 +18,19 @@ export default function Attendance({ session }) {
       .from('attendance')
       .select('*')
       .eq('date', date)
-      .order('employee_name', { ascending: true })
+      .order('check_in', { ascending: true })
     setRows(data || [])
-    setMyRow((data || []).find((r) => r.username === session.username) || null)
     setLoading(false)
   }
 
+  // My sessions today, and whether I currently have one open (checked in, not out)
+  const mySessions = rows.filter((r) => r.username === session.username)
+  const openSession = mySessions.find((r) => !r.check_out)
+  const MAX_SESSIONS = 3
+  const atLimit = mySessions.length >= MAX_SESSIONS && !openSession
+
   async function checkIn() {
+    if (atLimit) return
     const payload = {
       username: session.username,
       employee_name: session.full_name,
@@ -33,29 +38,30 @@ export default function Attendance({ session }) {
       check_in: new Date().toISOString(),
     }
     const { data } = await supabase.from('attendance').insert(payload).select().maybeSingle()
-    if (data) {
-      setMyRow(data)
-      setRows((r) => [...r, data])
-    }
+    if (data) setRows((r) => [...r, data])
   }
 
   async function checkOut() {
-    if (!myRow) return
+    if (!openSession) return
     const { data } = await supabase
       .from('attendance')
       .update({ check_out: new Date().toISOString() })
-      .eq('id', myRow.id)
+      .eq('id', openSession.id)
       .select()
       .maybeSingle()
-    if (data) {
-      setMyRow(data)
-      setRows((r) => r.map((row) => (row.id === data.id ? data : row)))
-    }
+    if (data) setRows((r) => r.map((row) => (row.id === data.id ? data : row)))
   }
 
   function fmt(t) {
     if (!t) return '—'
     return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  // Group all rows by employee for the team table
+  const byEmployee = {}
+  for (const r of rows) {
+    if (!byEmployee[r.username]) byEmployee[r.username] = { name: r.employee_name, sessions: [] }
+    byEmployee[r.username].sessions.push(r)
   }
 
   return (
@@ -71,17 +77,24 @@ export default function Attendance({ session }) {
       {date === today() && (
         <div style={s.punchCard}>
           <div>
-            <div style={s.punchLabel}>Today</div>
+            <div style={s.punchLabel}>Today · {mySessions.length} session{mySessions.length === 1 ? '' : 's'}</div>
             <div style={s.punchTimes}>
-              In: <strong>{fmt(myRow?.check_in)}</strong> &nbsp;·&nbsp; Out: <strong>{fmt(myRow?.check_out)}</strong>
+              {mySessions.length === 0
+                ? 'Not checked in yet'
+                : mySessions.map((r, i) => (
+                    <span key={r.id}>
+                      {i > 0 && ' · '}
+                      {fmt(r.check_in)}–{fmt(r.check_out)}
+                    </span>
+                  ))}
             </div>
           </div>
-          {!myRow ? (
-            <button style={s.punchBtnIn} onClick={checkIn}>Check in</button>
-          ) : !myRow.check_out ? (
+          {openSession ? (
             <button style={s.punchBtnOut} onClick={checkOut}>Check out</button>
+          ) : atLimit ? (
+            <span style={s.limitTag}>Limit reached (3/day)</span>
           ) : (
-            <span style={s.doneTag}>Day complete</span>
+            <button style={s.punchBtnIn} onClick={checkIn}>Check in</button>
           )}
         </div>
       )}
@@ -89,23 +102,28 @@ export default function Attendance({ session }) {
       <h3 style={s.tableHeading}>Team — {date}</h3>
       {loading ? (
         <p style={{ color: 'var(--ink-soft)' }}>Loading…</p>
-      ) : rows.length === 0 ? (
+      ) : Object.keys(byEmployee).length === 0 ? (
         <p style={{ color: 'var(--ink-soft)' }}>No one has checked in yet.</p>
       ) : (
         <table style={s.table}>
           <thead>
             <tr>
               <th style={s.th}>Employee</th>
-              <th style={s.th}>Check in</th>
-              <th style={s.th}>Check out</th>
+              <th style={s.th}>Sessions (in–out)</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td style={s.td}>{r.employee_name}</td>
-                <td style={s.td}>{fmt(r.check_in)}</td>
-                <td style={s.td}>{fmt(r.check_out)}</td>
+            {Object.values(byEmployee).map((emp) => (
+              <tr key={emp.name}>
+                <td style={s.td}>{emp.name}</td>
+                <td style={s.td}>
+                  {emp.sessions.map((r, i) => (
+                    <span key={r.id} style={s.sessionChip}>
+                      {fmt(r.check_in)}–{fmt(r.check_out)}
+                      {i < emp.sessions.length - 1 ? '  ' : ''}
+                    </span>
+                  ))}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -128,9 +146,10 @@ const s = {
   punchTimes: { fontSize: 15, marginTop: 4 },
   punchBtnIn: { background: 'var(--gold)', color: 'var(--navy)', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 },
   punchBtnOut: { background: 'var(--cream)', color: 'var(--navy)', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 },
-  doneTag: { fontSize: 13, opacity: 0.8 },
+  limitTag: { fontSize: 13, opacity: 0.85, fontWeight: 600 },
   tableHeading: { fontSize: 14, color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 10 },
   table: { width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', borderRadius: 10, overflow: 'hidden' },
   th: { textAlign: 'left', fontSize: 12, color: 'var(--ink-soft)', padding: '10px 12px', borderBottom: '1px solid var(--line)' },
   td: { padding: '10px 12px', fontSize: 13, borderBottom: '1px solid var(--line)' },
+  sessionChip: { display: 'inline-block', background: 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '3px 8px', marginRight: 6, marginBottom: 4, fontSize: 12 },
 }
