@@ -28,7 +28,7 @@ export default function App() {
     <div style={s.app}>
       <header style={s.header}>
         <div style={s.brand}>
-          <div style={s.brandBadge}>HK</div>
+          <img src="/logo.png" alt="HK" style={s.brandBadge} />
           <span style={s.brandName}>HK Registry</span>
         </div>
         <nav style={s.nav}>
@@ -57,9 +57,7 @@ const s = {
   },
   brand: { display: 'flex', alignItems: 'center', gap: 10 },
   brandBadge: {
-    width: 30, height: 30, borderRadius: '50%', border: '1.5px solid var(--gold)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--navy)',
+    width: 34, height: 34, borderRadius: '50%', objectFit: 'contain', display: 'block',
   },
   brandName: { fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--navy)', fontSize: 17 },
   nav: { display: 'flex', gap: 6, flex: 1 },

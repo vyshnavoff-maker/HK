@@ -47,12 +47,9 @@ export default function Login({ onLogin }) {
   return (
     <div style={styles.wrap}>
       <div style={styles.card}>
-        <div style={styles.badge}>HK</div>
+        <img src="/logo.png" alt="HK Business Consultancy" style={styles.badge} />
         <h1 style={styles.title}>HK Registry</h1>
         <p style={styles.sub}>Client tracker &amp; attendance</p>
-        <p style={{ fontSize: 10, color: '#999', wordBreak: 'break-all', marginBottom: 16 }}>
-          DEBUG URL: [{import.meta.env.VITE_SUPABASE_URL}]
-        </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <label style={styles.label}>
@@ -108,18 +105,12 @@ const styles = {
     textAlign: 'center',
   },
   badge: {
-    width: 56,
-    height: 56,
+    width: 72,
+    height: 72,
     borderRadius: '50%',
-    border: '2px solid var(--gold)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    objectFit: 'contain',
     margin: '0 auto 18px',
-    fontFamily: 'var(--font-display)',
-    fontWeight: 700,
-    fontSize: 20,
-    color: 'var(--navy)',
+    display: 'block',
   },
   title: {
     fontFamily: 'var(--font-display)',
