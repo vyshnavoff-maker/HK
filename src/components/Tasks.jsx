@@ -62,8 +62,8 @@ export default function Tasks({ session }) {
     <div>
       <div style={s.header}>
         <div>
-          <h2 style={s.title}>Daily tasks</h2>
-          <p style={s.sub}>What got done today, by whom</p>
+          <h2 style={s.title}>Daily Report</h2>
+          <p style={s.sub}>Add what you did today — everyone's tasks show below</p>
         </div>
         <input type="date" style={s.dateInput} value={date} onChange={(e) => setDate(e.target.value)} />
       </div>

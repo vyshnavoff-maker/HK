@@ -4,7 +4,6 @@ import ClientRegistry from './components/ClientRegistry.jsx'
 import Attendance from './components/Attendance.jsx'
 import Leaves from './components/Leaves.jsx'
 import Tasks from './components/Tasks.jsx'
-import DailyReport from './components/DailyReport.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -38,7 +37,6 @@ export default function App() {
           <button style={tab === 'clients' ? s.navActive : s.navBtn} onClick={() => setTab('clients')}>Clients</button>
           <button style={tab === 'attendance' ? s.navActive : s.navBtn} onClick={() => setTab('attendance')}>Attendance</button>
           <button style={tab === 'leaves' ? s.navActive : s.navBtn} onClick={() => setTab('leaves')}>Leaves</button>
-          <button style={tab === 'tasks' ? s.navActive : s.navBtn} onClick={() => setTab('tasks')}>Tasks</button>
           <button style={tab === 'report' ? s.navActive : s.navBtn} onClick={() => setTab('report')}>Daily Report</button>
         </nav>
         <div style={s.userArea}>
@@ -51,8 +49,7 @@ export default function App() {
         {tab === 'clients' && <ClientRegistry session={session} />}
         {tab === 'attendance' && <Attendance session={session} />}
         {tab === 'leaves' && <Leaves session={session} />}
-        {tab === 'tasks' && <Tasks session={session} />}
-        {tab === 'report' && <DailyReport />}
+        {tab === 'report' && <Tasks session={session} />}
       </main>
     </div>
   )
