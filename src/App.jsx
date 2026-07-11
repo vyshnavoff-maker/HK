@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import Login from './components/Login.jsx'
 import ClientRegistry from './components/ClientRegistry.jsx'
 import Attendance from './components/Attendance.jsx'
+import Leaves from './components/Leaves.jsx'
+import Tasks from './components/Tasks.jsx'
+import DailyReport from './components/DailyReport.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -34,6 +37,9 @@ export default function App() {
         <nav style={s.nav}>
           <button style={tab === 'clients' ? s.navActive : s.navBtn} onClick={() => setTab('clients')}>Clients</button>
           <button style={tab === 'attendance' ? s.navActive : s.navBtn} onClick={() => setTab('attendance')}>Attendance</button>
+          <button style={tab === 'leaves' ? s.navActive : s.navBtn} onClick={() => setTab('leaves')}>Leaves</button>
+          <button style={tab === 'tasks' ? s.navActive : s.navBtn} onClick={() => setTab('tasks')}>Tasks</button>
+          <button style={tab === 'report' ? s.navActive : s.navBtn} onClick={() => setTab('report')}>Daily Report</button>
         </nav>
         <div style={s.userArea}>
           <span style={s.userName}>{session.full_name}</span>
@@ -42,7 +48,11 @@ export default function App() {
       </header>
 
       <main style={s.main}>
-        {tab === 'clients' ? <ClientRegistry session={session} /> : <Attendance session={session} />}
+        {tab === 'clients' && <ClientRegistry session={session} />}
+        {tab === 'attendance' && <Attendance session={session} />}
+        {tab === 'leaves' && <Leaves session={session} />}
+        {tab === 'tasks' && <Tasks session={session} />}
+        {tab === 'report' && <DailyReport />}
       </main>
     </div>
   )
