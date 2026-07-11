@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { todayLocal, currentMonthLocal } from '../dateUtils'
 
 const MONTHLY_LIMIT = 3
 
@@ -12,14 +13,14 @@ function monthBounds(yyyyMm) {
 }
 
 function currentMonth() {
-  return new Date().toISOString().slice(0, 7) // YYYY-MM
+  return currentMonthLocal()
 }
 
 export default function Leaves({ session }) {
   const [month, setMonth] = useState(currentMonth())
   const [leaves, setLeaves] = useState([])
   const [loading, setLoading] = useState(true)
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [date, setDate] = useState(todayLocal())
   const [reason, setReason] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -89,6 +90,33 @@ export default function Leaves({ session }) {
     }
     if (inserted && dateIsInViewedMonth) setLeaves((l) => [inserted, ...l])
     setReason('')
+    notifyByEmail(date, reason.trim())
+  }
+
+  async function notifyByEmail(leaveDate, leaveReason) {
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    if (!serviceId || !templateId || !publicKey) return // not configured — skip silently
+
+    try {
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_id: serviceId,
+          template_id: templateId,
+          user_id: publicKey,
+          template_params: {
+            employee_name: session.full_name,
+            leave_date: leaveDate,
+            reason: leaveReason || 'No reason given',
+          },
+        }),
+      })
+    } catch {
+      // Leave was already saved successfully — email failure shouldn't block the user
+    }
   }
 
   async function cancelLeave(id) {

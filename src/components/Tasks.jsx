@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { todayLocal } from '../dateUtils'
 
 export default function Tasks({ session }) {
   const [todos, setTodos] = useState([])
@@ -60,7 +61,7 @@ export default function Tasks({ session }) {
   }
 
   function isOverdue(t) {
-    return t.deadline && !t.done && t.deadline < new Date().toISOString().slice(0, 10)
+    return t.deadline && !t.done && t.deadline < todayLocal()
   }
 
   const visible = todos.filter((t) => filter === 'all' || (filter === 'open' && !t.done) || (filter === 'done' && t.done))

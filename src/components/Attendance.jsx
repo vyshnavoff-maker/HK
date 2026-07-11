@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabaseClient'
+import { todayLocal } from '../dateUtils'
 
 function today() {
-  return new Date().toISOString().slice(0, 10)
+  return todayLocal()
 }
 
 export default function Attendance({ session }) {
