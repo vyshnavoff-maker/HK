@@ -10,6 +10,10 @@ export default function Attendance({ session }) {
   const [date, setDate] = useState(today())
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
+  const [closingId, setClosingId] = useState(null)
+  const [closeTime, setCloseTime] = useState('')
+
+  const isAdmin = session.role === 'admin'
 
   useEffect(() => { load() }, [date])
 
@@ -56,6 +60,27 @@ export default function Attendance({ session }) {
   function fmt(t) {
     if (!t) return '—'
     return new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  function startClosing(row) {
+    setClosingId(row.id)
+    // Default to now, in HH:MM for the time input
+    const now = new Date()
+    setCloseTime(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`)
+  }
+
+  async function confirmClose(row) {
+    if (!closeTime) return
+    const [h, m] = closeTime.split(':')
+    const closeDateTime = new Date(`${row.date}T${h}:${m}:00`)
+    const { data } = await supabase
+      .from('attendance')
+      .update({ check_out: closeDateTime.toISOString() })
+      .eq('id', row.id)
+      .select()
+      .maybeSingle()
+    if (data) setRows((r) => r.map((x) => (x.id === data.id ? data : x)))
+    setClosingId(null)
   }
 
   // Group all rows by employee for the team table
@@ -119,8 +144,18 @@ export default function Attendance({ session }) {
                 <td style={s.td}>{emp.name}</td>
                 <td style={s.td}>
                   {emp.sessions.map((r, i) => (
-                    <span key={r.id} style={s.sessionChip}>
+                    <span key={r.id} style={{ ...s.sessionChip, ...(!r.check_out ? s.sessionChipOpen : {}) }}>
                       {fmt(r.check_in)}–{fmt(r.check_out)}
+                      {!r.check_out && isAdmin && closingId !== r.id && (
+                        <button style={s.closeLink} onClick={() => startClosing(r)}>close</button>
+                      )}
+                      {!r.check_out && isAdmin && closingId === r.id && (
+                        <span style={s.closeForm}>
+                          <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} style={s.closeInput} />
+                          <button style={s.closeConfirm} onClick={() => confirmClose(r)}>✓</button>
+                          <button style={s.closeCancel} onClick={() => setClosingId(null)}>✕</button>
+                        </span>
+                      )}
                       {i < emp.sessions.length - 1 ? '  ' : ''}
                     </span>
                   ))}
@@ -152,5 +187,11 @@ const s = {
   table: { width: '100%', borderCollapse: 'collapse', background: 'var(--paper)', borderRadius: 10, overflow: 'hidden' },
   th: { textAlign: 'left', fontSize: 12, color: 'var(--ink-soft)', padding: '10px 12px', borderBottom: '1px solid var(--line)' },
   td: { padding: '10px 12px', fontSize: 13, borderBottom: '1px solid var(--line)' },
-  sessionChip: { display: 'inline-block', background: 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '3px 8px', marginRight: 6, marginBottom: 4, fontSize: 12 },
+  sessionChip: { display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.04)', borderRadius: 6, padding: '3px 8px', marginRight: 6, marginBottom: 4, fontSize: 12 },
+  sessionChipOpen: { background: 'rgba(179,67,43,0.1)', color: 'var(--red)', fontWeight: 600 },
+  closeLink: { background: 'none', border: 'none', color: 'var(--navy)', textDecoration: 'underline', cursor: 'pointer', fontSize: 11, padding: 0 },
+  closeForm: { display: 'inline-flex', alignItems: 'center', gap: 4 },
+  closeInput: { border: '1px solid var(--line)', borderRadius: 5, fontSize: 11, padding: '2px 4px' },
+  closeConfirm: { background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', fontSize: 11, lineHeight: 1 },
+  closeCancel: { background: 'none', border: '1px solid var(--line)', borderRadius: 4, width: 20, height: 20, cursor: 'pointer', fontSize: 11, lineHeight: 1 },
 }

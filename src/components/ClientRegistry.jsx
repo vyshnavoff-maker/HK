@@ -18,6 +18,7 @@ function emptyClient() {
     notes: '',
     totalFees: '',
     paidAmount: '',
+    currency: 'AED',
     paymentDueDate: '',
     log: [],
   }
@@ -195,7 +196,13 @@ export default function ClientRegistry({ session }) {
           <div style={s.sectionBody}>
             <h3 style={s.sectionTitle}>Fees</h3>
             <div style={s.feesGrid}>
-              <label style={s.label}>Total fees (AED)
+              <label style={s.label}>Currency
+                <select style={s.input} value={draft.currency || 'AED'} onChange={(e) => setDraft({ ...draft, currency: e.target.value })}>
+                  <option>AED</option>
+                  <option>INR</option>
+                </select>
+              </label>
+              <label style={s.label}>Total fees
                 <input
                   style={s.input}
                   type="number"
@@ -204,7 +211,7 @@ export default function ClientRegistry({ session }) {
                   onChange={(e) => setDraft({ ...draft, totalFees: e.target.value })}
                 />
               </label>
-              <label style={s.label}>Paid so far (AED)
+              <label style={s.label}>Paid so far
                 <input
                   style={s.input}
                   type="number"
@@ -225,16 +232,16 @@ export default function ClientRegistry({ session }) {
             <div style={s.feesSummary}>
               <div style={s.feesBox}>
                 <div style={s.feesLabel}>Total</div>
-                <div style={s.feesValue}>AED {num(draft.totalFees).toLocaleString()}</div>
+                <div style={s.feesValue}>{draft.currency || 'AED'} {num(draft.totalFees).toLocaleString()}</div>
               </div>
               <div style={s.feesBox}>
                 <div style={s.feesLabel}>Paid</div>
-                <div style={{ ...s.feesValue, color: 'var(--green)' }}>AED {num(draft.paidAmount).toLocaleString()}</div>
+                <div style={{ ...s.feesValue, color: 'var(--green)' }}>{draft.currency || 'AED'} {num(draft.paidAmount).toLocaleString()}</div>
               </div>
               <div style={s.feesBox}>
                 <div style={s.feesLabel}>Due</div>
                 <div style={{ ...s.feesValue, color: dueAmount > 0 ? 'var(--red)' : 'var(--green)' }}>
-                  AED {dueAmount.toLocaleString()}
+                  {draft.currency || 'AED'} {dueAmount.toLocaleString()}
                 </div>
               </div>
             </div>
@@ -313,7 +320,7 @@ export default function ClientRegistry({ session }) {
                   )}
                   {due(c) > 0 && (
                     <div style={{ ...s.next, color: isPaymentOverdue(c) ? 'var(--red)' : 'var(--ink-soft)' }}>
-                      AED {due(c).toLocaleString()} due{c.paymentDueDate ? ` · ${c.paymentDueDate}` : ''}
+                      {c.currency || 'AED'} {due(c).toLocaleString()} due{c.paymentDueDate ? ` · ${c.paymentDueDate}` : ''}
                     </div>
                   )}
                 </div>
@@ -341,7 +348,7 @@ export default function ClientRegistry({ session }) {
                 <td style={s.td}>{c.nextAction}</td>
                 <td style={{ ...s.td, color: isOverdue(c) ? 'var(--red)' : 'inherit' }}>{c.dueDate}</td>
                 <td style={{ ...s.td, color: isPaymentOverdue(c) ? 'var(--red)' : 'inherit' }}>
-                  {due(c) > 0 ? `AED ${due(c).toLocaleString()}` : '—'}
+                  {due(c) > 0 ? `${c.currency || 'AED'} ${due(c).toLocaleString()}` : '—'}
                 </td>
               </tr>
             ))}
