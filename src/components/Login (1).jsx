@@ -50,6 +50,9 @@ export default function Login({ onLogin }) {
         <div style={styles.badge}>HK</div>
         <h1 style={styles.title}>HK Registry</h1>
         <p style={styles.sub}>Client tracker &amp; attendance</p>
+        <p style={{ fontSize: 10, color: '#999', wordBreak: 'break-all', marginBottom: 16 }}>
+          DEBUG URL: [{import.meta.env.VITE_SUPABASE_URL}]
+        </p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
           <label style={styles.label}>
